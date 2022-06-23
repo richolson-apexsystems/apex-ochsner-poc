@@ -1,0 +1,100 @@
+@import url('https://fonts.googleapis.com/css2?family=Anton&display=swap');
+$Anton: 'Anton', sans-serif;
+
+@import "{}/node_modules/bootstrap/scss/bootstrap.scss";
+@import "{}/imports/ui/stylesheets/not-found.scss";
+@import "{}/imports/ui/stylesheets/styles.scss";
+
+.bootbox-close-button {
+    border-radius: 0.3rem !important;
+    //border-color:#8a8a8a;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+}
+
+.video-hidden {
+    /*display: none;*/
+    visibility: hidden;
+}
+
+// this is a placeholder for video elements (used early in POC, currently not being used)
+.videoholder {
+  text-align: center;
+  margin: 13px 0 6px 0;
+  padding: 0;
+  height: 70%;
+  width: 100%;
+  display: block;
+  vertical-align: top;
+  box-sizing: border-box;
+  color: #fff;
+  background-color: #000;
+
+}
+// styles for bs card that holds video elements and buttons
+.card-min-width {
+    min-width: 300px;
+}
+
+.container-min-width {
+    min-width: 1050px;
+}
+.card-body-min-height {
+      height: 480px;
+ }
+.cardsize {
+    height:auto;
+   
+}
+// responsive styles to adjust video element sizes
+@media screen and (min-width: 500px) {
+    .videoholder {
+      height: 44%;
+    }
+    .card-body-min-height {
+      height: 390px;
+    }    
+}
+@media screen and (min-width: 1186px) {
+    .videoholder {
+      height: 47%;
+    }
+    .card-body-min-height {
+      height: 390px;
+    }     
+}
+
+@media screen and (min-width: 1300px) {
+    .videoholder {
+      height: 49%;
+    }
+    .card-body-min-height {
+      height: 390px;
+    }     
+}
+@media screen and (min-width: 1616px) {
+    .videoholder {
+      height: 56%;
+    }
+    .card-body-min-height {
+      height: 480px;
+    }      
+}
+
+@media screen and (min-width: 1700px) {
+    .videoholder {
+      height: 60%;
+    }
+    .card-body-min-height {
+      height: 485px;
+    }      
+}
+
+@media screen and (min-width: 1800px) {
+    .videoholder {
+      height: 63%;
+    }
+    .card-body-min-height {
+      height: 490px;
+    }      
+}
+

@@ -1,0 +1,19 @@
+.keepinline {
+  white-space: nowrap;
+}
+
+.keepinline > div {
+  width: 100%;
+  display: inline-block;
+}
+
+.inlineLeft, .inlineRight {
+    display: inline-block;
+}
+
+.inlineRight {
+   display:inline-block;
+    position:absolute;
+    right:0;
+    margin-right:8px;
+}

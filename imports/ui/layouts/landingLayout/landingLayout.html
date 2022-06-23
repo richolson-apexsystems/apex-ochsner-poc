@@ -1,0 +1,13 @@
+<template name="landingLayout">
+  {{> navigation}} 
+    <main class="main-layout pt-5" style="min-height: 100vh;">
+   
+        {{> Template.dynamic template=main}}
+    </main>
+
+  <footer class="footer mt-auto py-3 bg-light">
+    <div class="container">
+      <span class="text-muted">{{getDate}}</span>
+    </div>
+  </footer>
+</template>

@@ -1,0 +1,61 @@
+<template name="videos">
+   {{#if subsReady}}
+    <div class="container-fluid px-5 mx-5 pb-3">
+        <div class="row col-12  container-min-width">
+            <div class="card col-2" style="min-width:350px;">
+                <div class="card-body card-body-min-height" >
+                    <p class="card-text">Patient data shown on mouse over video. </p>
+                    <p class="card-text">
+                        {{#each getPatientData}}
+                            Patient Name: {{first_name}} {{last_name}} <br/>
+                            Room Number: {{room_number}} <br/>
+                            Camera URL: {{camera_url}} <br/>
+                            Nurse: {{nurse_name}} <br/>
+                            Nurse Phone: {{nurse_phone}} <br/>
+                        {{/each}}
+                    </p>
+                </div>
+            </div>
+      
+            {{#each getEdgeData}}
+                <div class="card card-min-width col-4 mx-5">
+                    <div class="card-body cardsize">
+                            {{#if edge_device }}   
+                            <div id="{{edge_device}}-border" class="m-2 js-mouse-vidb {{edge_device}}" style="border: solid 4px grey;width:100%;">
+                                <video id="{{edge_device}}" class="video-js vjs-default-skin vjs-16-9" height="360" controls autoplay muted="true" preload="none">
+                                    <source src="https://hls.zenzig.com/{{edge_device}}/index.m3u8" type="application/x-mpegURL" />
+                                </video>
+                            </div>
+                            {{else}}
+                            <div class="js-mouse-vidb {{edge_device}} videoholder" ></div>
+                            {{/if}}
+                            
+                            <h5 class="card-title">Room {{room_number}}</h5>
+                            {{#if edge_device }}
+                                <p class="card-text">This video element was dynamically created in response to receiving data for a room. 
+                                Move your mouse over the video window to see data for this room.</p>
+                                <div class="inlineLeft">
+                                    <a href="#" type="button" id="js-edgetest-start" class="btn btn-outline-dark" role="button" aria-pressed="true">Start</a>
+                                    <a href="#" type="button" id="js-edgetest-stop" class="btn btn-outline-danger" role="button" aria-pressed="true">Stop</a>
+                                    <a href="#" type="button" class="btn btn-outline-danger js-audio-button" role="button" aria-pressed="true">
+                                        <i class="fa-solid fa-microphone"></i>
+                                    </a>
+                                    <a href="#" id="js-reset-player" class="btn btn-primary btn-outline-dark" role="button" aria-pressed="true">Reset Player</a>
+                                    <div class="inlineRight"><h2>{{edgeData edge_device}}</h2></div>
+                                </div>
+                               
+                            {{/if}}
+                
+                    </div>
+                </div>
+            {{/each}}
+          
+            </div>
+        </div>
+    {{else}}
+
+    <div class="container">
+        <h3>loading ...</h3>
+    </div>
+    {{/if}}
+</template>
