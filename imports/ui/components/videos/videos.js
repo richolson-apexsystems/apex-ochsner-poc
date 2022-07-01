@@ -6,6 +6,8 @@ import { Session } from 'meteor/session';
 import { ReactiveDict } from 'meteor/reactive-dict';
 import { io } from 'socket.io-client';
 const socket = io("https://rtsp.zenzig.com", {secure:true});
+//const remotesocket = io("https://68.227.145.128:8080");
+//const remotesocket = io("https://demos.zenzig.com");
 import '/node_modules/bootstrap-select/dist/css/bootstrap-select.css';
 import videojs from 'video.js';
 const pageSession = new ReactiveDict();
@@ -130,6 +132,30 @@ Template.videos.onCreated(function videosOnCreated() {
 
 Template.videos.onRendered(function videosOnRendered() {
   $(document).ready(function(){
+    
+/*
+    socket.onAny(""+event+"", (data) => {
+        console.log("onAny event: "+event+" "+data);
+        let el = document.getElementById(""+event+"-border");
+        //If it isn't "undefined" and it isn't "null", then it exists.
+        if(typeof(el) != 'undefined' && el != null){
+          if (data == 0) {
+              el.style.border = "solid 6px green";
+              Session.set("edgedata", data);
+              Session.set(event, data);
+          } else if (data == 1) {
+            Session.set("edgedata", data);
+            Session.set(event, data);
+              el.style.border = "solid 6px yellow";
+          } else if (data == 2) {
+            Session.set("edgedata", data);
+            Session.set(event, data);
+              el.style.border = "solid 6px red";
+          } 
+        }
+   });    
+*/
+    
 /*    
     socket.on('audioMessage', function (audioChunks) {
         const audioBlob = new Blob(audioChunks);
@@ -138,21 +164,33 @@ Template.videos.onRendered(function videosOnRendered() {
         audio.play();
     });    
 */    
-    // socket.io testing
-      socket.on('pytest', (data) => {
-        //console.log("pytest: "+data);
-        let el = document.getElementById("js-socket-test");
-          //If it isn't "undefined" and it isn't "null", then it exists.
-          if(typeof(el) != 'undefined' && el != null){
-            if (data == 0) {
-                el.style.border = "solid 6px green";
-            } else if (data == 1) {
-                el.style.border = "solid 6px yellow";
-            } else if (data == 2) {
-                el.style.border = "solid 6px red";
-            } 
-          }
+
+
+
+      socket.on('room352', (data) => {
+        let event = 'room352';
+        console.log("room352: "+data);
+        let el = document.getElementById(""+event+"-border");
+        //If it isn't "undefined" and it isn't "null", then it exists.
+        if(typeof(el) != 'undefined' && el != null){
+          if (data == 0) {
+              el.style.border = "solid 6px green";
+              Session.set("edgedata", data);
+              Session.set(event, data);
+          } else if (data == 1) {
+            Session.set("edgedata", data);
+            Session.set(event, data);
+              el.style.border = "solid 6px yellow";
+          } else if (data == 2) {
+            Session.set("edgedata", data);
+            Session.set(event, data);
+              el.style.border = "solid 6px red";
+          } 
+        }        
       });
+      
+      
+      
       socket.on('pong', () => {
         console.log("sent ping, recieved pong");
       });
@@ -162,6 +200,9 @@ Template.videos.onRendered(function videosOnRendered() {
     Meteor.subscribe('patients.all'),
     Meteor.subscribe('devices.all')
   ];
+
+
+
 
    Tracker.autorun(() => {
       const areReady = handles.every(handle => handle.ready());
@@ -220,6 +261,9 @@ Template.videos.onRendered(function videosOnRendered() {
             },2000);
           }); // close ifUrlExists
         }); // close Patients.find()
+        
+       
+        
       } // close if areReady
     });
 /*  
@@ -252,7 +296,7 @@ Template.videos.helpers({
   },
   
   edgeData(devicename) {
-    //console.log("Session.get(devicename): "+Session.get(devicename));
+    console.log("Session.get(devicename): "+Session.get(devicename));
     if(Session.get(devicename) === 0 || 1 || 2) {
       return Session.get(devicename);
     }
@@ -317,7 +361,8 @@ Template.videos.events({
                 });
                 this.mediaRecorder.addEventListener("stop", () => {
                     // send audio data over socket.io to server - server currently redirects audio back to client for playback
-                    socket.emit('audioMessage',audioChunks);
+                    //socket.emit('audioMessage',audioChunks);
+                    socket.emit('audioSend',audioChunks);
                     // turn off red recording icon in browser tab
                     stream.getTracks() // get all tracks from the MediaStream
                       .forEach( track => track.stop() ); // stop each of them
@@ -392,33 +437,9 @@ Template.videos.events({
 
  'click #js-socket-test': function(e,t) {
     e.preventDefault();  
-    // send a message to the server to change the edge device state
-    // socket.emit('message', "this is a test of edge1 socket");
-    socket.emit('edgetest', true); 
-    //console.log(Session.get("EdgeDevice"));
-    let edgeDevice = Session.get("EdgeDevice");
-    //socket.emit('ping'); 
-    //console.log("socket.emit('ping'); ");
-    
-     socket.on('edgedata', (data) => {
-        //console.log('video1data: ' + data);
-        let el = document.getElementById(""+edgeDevice+"-border");
-        //If it isn't "undefined" and it isn't "null", then it exists.
-        if(typeof(el) != 'undefined' && el != null){
-          if (data == 0) {
-              el.style.border = "solid 6px green";
-              Session.set("edgedata", data);
-          } else if (data == 1) {
-            Session.set("edgedata", data);
-              el.style.border = "solid 6px yellow";
-          } else if (data == 2) {
-            Session.set("edgedata", data);
-              el.style.border = "solid 6px red";
-          } 
-        }
-   });
-
-
+    //remotesocket.emit('audioMessage', true);
+    socket.emit("testSocket", true);
+    console.log("socket test");
   },  
 
 
@@ -447,6 +468,7 @@ Template.videos.events({
           const areReady = t.handles.every(handle => handle.ready());
           // make sure data is ready
           if(areReady) {
+            console.log("areReady");
               // our ffmpeg call in onCreated should have started pulling rtsp from the remote camera passing it to local rtsp server to generate HLS.
               // we need to make sure our hls url is available before we insert the videojs player so we wrap our insertion code in this url checking function.
               ifUrlExist(`https://hls.zenzig.com/${me.edge_device}/index.m3u8`, function(exists) {
@@ -480,6 +502,55 @@ Template.videos.events({
         });      
      },
 
+
+
+
+
+
+ 'click #js-kill-ffmpeg': function(e,t) {
+    e.preventDefault();
+    let me = this;
+    let edgeDevice = me.edge_device;
+    // create an id from edge device name
+    let videoid = '#'+me.edge_device+'';
+    console.log("edgeDevice: "+edgeDevice);
+    let sequence = new Promise(function (resolve) {
+      // dispose the videojs instance and resolve the promise
+      videojs(videoid).dispose();
+      resolve();
+    });
+    sequence
+      .then(() => {
+    	  Meteor.call("devicePullObject", { "edgedevice": edgeDevice }); 
+        return;
+      }).then(() =>{
+    	  // kill any ffmpeg instance for this device name
+    	  Meteor.call("killffmpeg", edgeDevice);
+        return;
+      });  
+  }, 
+
+ 'click #js-start-ffmpeg': function(e,t) {
+        let me = this;
+        Meteor.call('ffmpegCopyFromCamera',''+me.camera_url+'',''+me.edge_device+'', function(err, res) {
+          if (err) { return console.log("ffmpegCopyFromCamera err: "+err)} 
+          console.log("copy from camera called.");
+          return true;
+        });   
+   
+ },
+
+ 'click #js-stop-ffmpeg': function(e,t) {
+        let me = this;
+        let edgeDevice = me.edge_device;
+    	  // kill any ffmpeg instance for this device name
+    	  Meteor.call("killffmpeg", edgeDevice);  
+   
+ },
+
+
+
+					  
    
 });
 

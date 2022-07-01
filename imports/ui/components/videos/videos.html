@@ -35,17 +35,27 @@
                                 <p class="card-text">This video element was dynamically created in response to receiving data for a room. 
                                 Move your mouse over the video window to see data for this room.</p>
                                 <div class="inlineLeft">
-                                    <a href="#" type="button" id="js-edgetest-start" class="btn btn-outline-dark" role="button" aria-pressed="true">Start</a>
-                                    <a href="#" type="button" id="js-edgetest-stop" class="btn btn-outline-danger" role="button" aria-pressed="true">Stop</a>
+                                    <a href="#" type="button" id="js-edgetest-start" class="btn btn-outline-success" role="button" aria-pressed="true">Start Data</a>
+                                    <a href="#" type="button" id="js-edgetest-stop" class="btn btn-outline-danger" role="button" aria-pressed="true">Stop Data</a>
                                     <a href="#" type="button" class="btn btn-outline-danger js-audio-button" role="button" aria-pressed="true">
                                         <i class="fa-solid fa-microphone"></i>
                                     </a>
-                                    <a href="#" id="js-reset-player" class="btn btn-primary btn-outline-dark" role="button" aria-pressed="true">Reset Player</a>
-                                    <div class="inlineRight"><h2>{{edgeData edge_device}}</h2></div>
+                                    <div class="inlineRight">
+                                        <h2>{{edgeData edge_device}}</h2>
+                                    </div>
                                 </div>
-                               
+                                <div class="mt-2">
+                                    <a href="#" id="js-reset-player" class="btn btn-outline-dark" role="button" aria-pressed="true">Reset Player</a>
+                                    <a href="#" id="js-socket-test" class="btn btn-outline-dark" role="button" aria-pressed="true">Remote Socket Test</a>
+                                </div>
+                                <div class="mt-2">
+                                    <a href="#" id="js-kill-ffmpeg" class="btn  btn-outline-danger" role="button" aria-pressed="true">Remove Element & Kill ffmpeg</a>                                    
+                                </div>
+                                <div class="mt-2">
+                                    <a href="#" id="js-start-ffmpeg" class="btn btn-outline-success" role="button" aria-pressed="true">Start ffmpeg</a>
+                                    <a href="#" id="js-stop-ffmpeg" class="btn btn-outline-danger" role="button" aria-pressed="true">Stop ffmpeg</a>
+                                </div>                                
                             {{/if}}
-                
                     </div>
                 </div>
             {{/each}}

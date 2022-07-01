@@ -2,6 +2,9 @@ import { Meteor } from 'meteor/meteor';
 //import { Devices } from '/imports/api/devices/devices.js';
 import http from 'http';
 import socket_io from 'socket.io';
+import { io } from 'socket.io-client';
+const remotesocket = io("http://68.227.145.128:8080");
+//const remotesocket = io("https://demos.zenzig.com");
 var fs = Npm.require('fs-extra');
 //var ffmpeg = require('ffmpeg');
 //var pathToFfmpeg = require('ffmpeg-static');
@@ -83,7 +86,23 @@ const io = socket_io(server, {
 });
 
 io.on("connection", (socket) => {
+  
+  
+  
+  function emitLocal(emitTo, data) {
+    console.log("emitLocal: "+emitTo+" - "+data);
+      socket.emit(emitTo, data);
+
+  }
     console.log("client connected");
+    //socket.emit(`pytest`, true);
+
+    remotesocket.onAny((event, args) => {
+        console.log("remotesocket onAny: "+JSON.stringify(event)+" - "+JSON.stringify(args));
+        emitLocal(""+event+"", args.FallRisk);
+
+    });  
+  
     
     // dynamic listeners - listeners are edge device names, exp: "room301", "room302", etc.
     // and are the value of event, args is true or false
@@ -102,6 +121,39 @@ io.on("connection", (socket) => {
       });
     });
 
+
+  socket.on("testSocket", function(data) {
+    console.log("testSocket: "+data);
+    remotesocket.emit('audioMessage', data);
+    
+  });
+
+remotesocket.on('PING', function(){
+  console.log("got ping, send pong");
+  remotesocket.emit('PONG');
+});
+
+socket.on("audioSend", function(barray) {
+      let myBlob;
+      let sequence = new Promise(function (resolve) {
+        myBlob = new Blob(barray, { type: 'audio/wav' });
+        resolve();
+      });
+      sequence
+        .then(() => {
+          //saveRecording(myBlob.buffer, "myaudio.wav", "/.uploads/");
+          remotesocket.emit('audioMessage',myBlob.buffer);
+          console.log("emit audio to remote");
+          return;
+      });
+  
+});
+     
+
+
+
+
+
   // testing various node onvif modules to aid in communicating with remote cameras 
   socket.on("audiotest", function(data) {
     console.log("audiotest: "+data);
@@ -111,6 +163,9 @@ io.on("connection", (socket) => {
         console.log("results: "+JSON.stringify(results));
       });  
   });  
+  
+  
+  
   
   // get audio bytearray from client, save to file, stream audio to remote over rtp
   socket.on("audioMessage", function(barray) {
