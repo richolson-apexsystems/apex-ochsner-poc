@@ -1,0 +1,74 @@
+
+.video-element-wrapper {
+    position:absolute;
+    z-index:10;
+    bottom:5px;
+    right:-4px;
+    padding:2px 0 0 1px; 
+    margin:2px 0 0 0;
+    width:98%;
+    height:30px;
+    background-color:#101820;
+    background: linear-gradient(to right, transparent, 0%, #101820, 99%, transparent);
+    color:white;
+}
+
+
+.video-icon-bar {
+  padding:0 0 0 5px;
+  width: 100%;
+ /* background-color: #212529;*/
+  overflow: auto;
+}
+
+.video-icon-bar a {
+  float: left;
+  width: 20%;
+  text-align: center;
+  padding: 12px 0;
+  transition: all 0.3s ease;
+  color: white;
+  font-size: 36px;
+}
+
+.video-icon-bar a:hover {
+  background-color: #000;
+}
+
+.active {
+  background-color: #04AA6D;
+}
+
+
+.video-controls-effects {
+    cursor: pointer;
+    transition: 0.2s all;
+}
+
+.video-controls-effects:active {
+    transform: scale(1.15);
+}
+        
+        
+.modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1050;
+    width: 1px;
+    height: 1px;
+    background-color: #000;
+}
+
+.modal {
+    position: fixed;
+    top: 100px !important;
+    left: 62vw !important;
+    z-index: 1055;
+    display: none;
+    width:520px;
+   /* height:325px;*/
+    overflow-x: hidden;
+    overflow-y: hidden;
+    outline: 0;
+}      

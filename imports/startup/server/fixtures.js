@@ -1,19 +1,16 @@
 import { Meteor } from 'meteor/meteor';
-//import { Devices } from '/imports/api/devices/devices.js';
+import { Mongo } from 'meteor/mongo';
+import { Devices } from '/imports/api/devices/devices.js';
 import http from 'http';
 import socket_io from 'socket.io';
 import { io } from 'socket.io-client';
 const remotesocket = io("http://68.227.145.128:8080");
 //const remotesocket = io("https://demos.zenzig.com");
 var fs = Npm.require('fs-extra');
-//var ffmpeg = require('ffmpeg');
-//var pathToFfmpeg = require('ffmpeg-static');
-//var path = Npm.require('path');
 const OnvifManager = require('onvif-nvt');
 const Blob = require('node-blob');
 // set a port for the socket.io connection, meteor is running on port 3000
 const PORT = 8080;
-//var clients = 0;
 
 // meteor needs a seperate process to handle external synchronous commands, like calling a bash script and getting the result
 var process_exec_sync = function (command) {
@@ -39,7 +36,6 @@ var process_exec_sync = function (command) {
   return future.wait();
 };
 
-// with our process_exec_sync function defined above we can use ffmpeg to stream our audio file
 function ffmpegStreamAudio(filename) {
     let result = process_exec_sync(`ffmpeg -re -i  /home/rich/apex/apex-ochsner-poc/.uploads/${filename} -acodec pcm_s16be -ar 44100 -ac 2 -payload_type 10 -f rtp udp://98.188.56.212:8888`);
      // check for error
@@ -49,6 +45,18 @@ function ffmpegStreamAudio(filename) {
     // success
     return result;
 }
+
+function ffmpegStreamAudioBuffer(chunk) {
+    //let result = process_exec_sync(`ffmpeg -re -i  ${chunk} -acodec pcm_s16be -ar 44100 -ac 2 -payload_type 10 -f rtp udp://98.188.56.212:8888`);
+    let result = process_exec_sync(`ffmpeg -re -i /.uploads/myaudio.wav -c:a pcm_mulaw -f rtp -ssrc 61811 -sdp_file ./out.sdp -ar 8000 -ac 1 tcp://home.zenzig.com:554`);
+     // check for error
+    if (result.error) {
+      throw new Meteor.Error("exec-fail", "Error running ffmpeg: " + result.error.message);
+    }
+    // success
+    return result;
+}
+
 
 // function to return a random number between 0 and max - we use this to simulate our data feed in the client
 function getRandomInt(max) {
@@ -77,33 +85,29 @@ function saveRecording(blob, name, path, encoding) {
 } 
 
 Meteor.startup(() => {
-// define socket.io server and set CORS to allow all access
-const server = http.createServer();
-const io = socket_io(server, {
-  cors: {
-    origin: '*',
-  }
-});
+  // define socket.io server and set CORS to allow all access
+  const server = http.createServer();
+  const io = socket_io(server, {
+    cors: {
+      origin: '*',
+    }
+  });
+  
+  io.on("connection", (socket) => {
 
-io.on("connection", (socket) => {
-  
-  
-  
+  // pass values from remotesocket to socket
   function emitLocal(emitTo, data) {
-    console.log("emitLocal: "+emitTo+" - "+data);
-      socket.emit(emitTo, data);
-
+    socket.emit(emitTo, data);
   }
-    console.log("client connected");
-    //socket.emit(`pytest`, true);
 
-    remotesocket.onAny((event, args) => {
-        console.log("remotesocket onAny: "+JSON.stringify(event)+" - "+JSON.stringify(args));
-        emitLocal(""+event+"", args.FallRisk);
-
-    });  
+  // this is remote onAny listener. For example, if remotesocket sends data to "room352" namespace the value will be contained in event.
+  // args contains the data object. Could not pass anything to local socket from within remotesocket so created emitLocal helper function
+  // to pass values.
+  remotesocket.onAny((event, args) => {
+    //console.log("remotesocket onAny: "+JSON.stringify(event)+" - "+JSON.stringify(args));
+    emitLocal(""+event+"", args.FallRisk);
+  });  
   
-    
     // dynamic listeners - listeners are edge device names, exp: "room301", "room302", etc.
     // and are the value of event, args is true or false
     socket.onAny((event, args) => {
@@ -121,38 +125,36 @@ io.on("connection", (socket) => {
       });
     });
 
-
-  socket.on("testSocket", function(data) {
-    console.log("testSocket: "+data);
-    remotesocket.emit('audioMessage', data);
-    
+  // use rawCollection to access native mongo driver and return result as a promise
+  Devices.rawCollection().find({_id: "devices"}).forEach(function(doc) {
+      console.log(doc);
   });
-
-remotesocket.on('PING', function(){
-  console.log("got ping, send pong");
-  remotesocket.emit('PONG');
-});
-
-socket.on("audioSend", function(barray) {
-      let myBlob;
-      let sequence = new Promise(function (resolve) {
-        myBlob = new Blob(barray, { type: 'audio/wav' });
-        resolve();
-      });
-      sequence
-        .then(() => {
-          //saveRecording(myBlob.buffer, "myaudio.wav", "/.uploads/");
-          remotesocket.emit('audioMessage',myBlob.buffer);
-          console.log("emit audio to remote");
-          return;
-      });
   
-});
+  socket.on("testSocket", function(data) {
+      console.log("testSocket: "+data);
+      remotesocket.emit('audioMessage', data);
+    });
+  
+  remotesocket.on('PING', function(){
+    console.log("got ping, send pong");
+    remotesocket.emit('PONG');
+  });
+  
+  socket.on("audioSend", function(barray) {
+        let myBlob;
+        let sequence = new Promise(function (resolve) {
+          myBlob = new Blob(barray, { type: 'audio/wav' });
+          resolve();
+        });
+        sequence
+          .then(() => {
+            //saveRecording(myBlob.buffer, "myaudio.wav", "/.uploads/");
+            remotesocket.emit('audioMessage',myBlob.buffer);
+            console.log("emit audio to remote");
+            return;
+        });
+  });
      
-
-
-
-
 
   // testing various node onvif modules to aid in communicating with remote cameras 
   socket.on("audiotest", function(data) {
@@ -164,7 +166,10 @@ socket.on("audioSend", function(barray) {
       });  
   });  
   
-  
+   // get audio bytearray from client, stream audio back to client
+  socket.on("audioSendLocal", function(barray) {
+      io.emit("audioReturnLocal", barray);
+  });     
   
   
   // get audio bytearray from client, save to file, stream audio to remote over rtp
@@ -200,6 +205,33 @@ try {
 } catch (error) {
   console.log(error);
 }   
+
+  // this upload server links the hidden "uploads" (plural) directory to an available URL path of "upload" (singular)
+  // this is a Meteor specific requirment.
+  UploadServer.init({
+    tmpDir: process.env.PWD + '/.uploads/tmp',
+    uploadDir: process.env.PWD + '/.uploads/',
+    checkCreateDirectories: true,
+    overwrite: true,
+
+    getDirectory: function(fileInfo, formData) {
+      if (formData && formData.directoryName !== null) {
+      // create a sub-directory in the uploadDir based on the content type (e.g. 'images')
+      return formData.directoryName;
+      }
+      return "";
+    },
+    getFileName: function(fileInfo, formData) {
+      if (formData && formData.prefix !== null) {
+        return fileInfo.name;
+      }
+    },
+    finished: function(fileInfo, formData) {
+        if (formData && formData._id !== null) {
+        return fileInfo;
+      }
+    }
+  });
 
 
 });

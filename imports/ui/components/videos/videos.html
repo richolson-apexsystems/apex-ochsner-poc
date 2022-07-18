@@ -21,16 +21,32 @@
                 <div class="card card-min-width col-4 mx-5">
                     <div class="card-body cardsize">
                             {{#if edge_device }}   
-                            <div id="{{edge_device}}-border" class="m-2 js-mouse-vidb {{edge_device}}" style="border: solid 4px grey;width:100%;">
-                                <video id="{{edge_device}}" class="video-js vjs-default-skin vjs-16-9" height="360" controls autoplay muted="true" preload="none">
-                                    <source src="https://hls.zenzig.com/{{edge_device}}/index.m3u8" type="application/x-mpegURL" />
-                                </video>
+                            <div style="position:relative;">
+                                <div class="video-element-wrapper">
+                                    <div class="video-icon-bar">
+                                        Nurse {{formatPhoneNumber nurse_phone}} 
+                                         <i class="ps-5 video-controls-effects js-microphone fa-solid fa-microphone-slash"></i>
+                                         <span class="inlineRight pe-3">
+                                               <i class="pe-1 video-controls-effects js-thumbs-down fa-solid fa-thumbs-up"></i>
+                                               <i class="fa-solid video-controls-effects js-thumbs-down fa-thumbs-down"></i>   
+                                         </span>
+                                     </div>    
+                                </div>
+                                <div id="{{edge_device}}-border" class="m-2 js-mouse-vidb {{edge_device}}" style="border: solid 4px grey;width:100%;overflow:hidden;">
+                                    <video id="{{edge_device}}" class="video-js vjs-default-skin vjs-16-9" height="360" controls autoplay muted="true" preload="none">
+                                        <source src="https://hls.zenzig.com/{{edge_device}}/index.m3u8" type="application/x-mpegURL" />
+                                    </video>
+                                </div>
                             </div>
                             {{else}}
                             <div class="js-mouse-vidb {{edge_device}} videoholder" ></div>
                             {{/if}}
+                            <span class="card-title text-danger inlineRight">
+                                {{#if showRecordingCount}} Recording: {{showRecordingCount}} of 20.{{/if}}
+                            </span>
+                            <h5 class="card-title">Room {{room_number}}
+                            </h5>
                             
-                            <h5 class="card-title">Room {{room_number}}</h5>
                             {{#if edge_device }}
                                 <p class="card-text">This video element was dynamically created in response to receiving data for a room. 
                                 Move your mouse over the video window to see data for this room.</p>
@@ -49,7 +65,10 @@
                                     <a href="#" id="js-socket-test" class="btn btn-outline-dark" role="button" aria-pressed="true">Remote Socket Test</a>
                                 </div>
                                 <div class="mt-2">
-                                    <a href="#" id="js-kill-ffmpeg" class="btn  btn-outline-danger" role="button" aria-pressed="true">Remove Element & Kill ffmpeg</a>                                    
+                                    <a href="#" id="js-volume" class="btn  btn-outline-danger" role="button" aria-pressed="true">Toggle Player Volume</a> 
+                                    <!--
+                                    <a href="#" id="js-kill-ffmpeg" class="btn  btn-outline-danger" role="button" aria-pressed="true">Remove Element & Kill ffmpeg</a> 
+                                    -->
                                 </div>
                                 <div class="mt-2">
                                     <a href="#" id="js-start-ffmpeg" class="btn btn-outline-success" role="button" aria-pressed="true">Start ffmpeg</a>

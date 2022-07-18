@@ -8,15 +8,17 @@
   "dependencies": {
     "@babel/runtime": "^7.15.4",
     "@popperjs/core": "^2.11.5",
+    "alerty": "0.0.1",
     "bootbox": "^5.5.2",
     "bootstrap": "^5.1.3",
     "bootstrap-select": "^1.13.18",
     "dayjs": "^1.11.1",
     "ffmpeg": "0.0.4",
+    "ffmpeg-audiobuffer-stream": "^1.0.0",
     "ffmpeg-static": "^5.0.0",
     "fs-extra": "^10.1.0",
     "jquery": "^3.6.0",
-    "jquery-validation": "^1.19.4",
+    "jquery-validation": "^1.19.5",
     "meteor-node-stubs": "^1.1.0",
     "node-blob": "0.0.2",
     "node-onvif": "^0.1.7",
@@ -26,7 +28,8 @@
     "path": "^0.12.7",
     "popper.js": "^1.16.1",
     "socket.io": "^4.5.0",
-    "socket.io-client": "^4.5.0"
+    "socket.io-client": "^4.5.0",
+    "videojs-errors": "^5.1.0"
   },
   "devDependencies": {
     "chai": "^4.2.0",
