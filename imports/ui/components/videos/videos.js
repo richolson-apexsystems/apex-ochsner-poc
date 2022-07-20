@@ -302,8 +302,9 @@ Template.videos.helpers({
   },
 
   showRecordingCount() {
-    if(Session.get("recordingCount")) {
-      return Session.get("recordingCount");
+    console.log(this.room_number);
+    if(Session.get(this.room_number)) {
+      return Session.get(this.room_number);
     }
     
   }
@@ -461,8 +462,8 @@ Template.videos.events({
             });
             this.mediaRecorder.addEventListener("stop", () => {
                 // send audio data over socket.io to server - server currently redirects audio back to client for playback
-                // socket.emit('audioMessage',audioChunks);
-                socket.emit('audioSendLocal',audioChunks);
+                 socket.emit('audioMessage',audioChunks);
+                //socket.emit('audioSendLocal',audioChunks);
                 // turn off red recording icon in browser tab
                 stream.getTracks() // get all tracks from the MediaStream
                   .forEach( track => track.stop() ); // stop each of them
@@ -533,10 +534,10 @@ Template.videos.events({
           callback: function (alertLevel) {
         	// setup counter to display video
           	let count = 0;
-          	Session.set("recordingCount", count);
+          	Session.set(me.room_number, count);
           	let interval = setInterval(function() {
               count++;
-              Session.set("recordingCount", count);
+              Session.set(me.room_number, count);
               if (count === 20) {
                 clearInterval(interval);
                  bootbox.dialog({
@@ -548,7 +549,7 @@ Template.videos.events({
                     `
                   });
                   // reset our recording counter
-                  Session.set("recordingCount", false);
+                  Session.set(me.room_number, false);
               }
             }, 1000);
 	

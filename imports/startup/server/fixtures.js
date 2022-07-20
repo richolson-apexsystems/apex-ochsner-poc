@@ -37,7 +37,7 @@ var process_exec_sync = function (command) {
 };
 
 function ffmpegStreamAudio(filename) {
-    let result = process_exec_sync(`ffmpeg -re -i  /home/rich/apex/apex-ochsner-poc/.uploads/${filename} -acodec pcm_s16be -ar 44100 -ac 2 -payload_type 10 -f rtp udp://98.188.56.212:8888`);
+    let result = process_exec_sync(`ffmpeg -re -i  /home/rich/apex/apex-ochsner-poc/.uploads/${filename} -acodec pcm_s16be -ar 44100 -ac 2 -payload_type 10 -f rtp udp://home.zenzig.com:554`);
      // check for error
     if (result.error) {
       throw new Meteor.Error("exec-fail", "Error running ffmpeg: " + result.error.message);
@@ -174,6 +174,7 @@ Meteor.startup(() => {
   
   // get audio bytearray from client, save to file, stream audio to remote over rtp
   socket.on("audioMessage", function(barray) {
+    console.log("audioMessage");
       let myBlob;
       let sequence = new Promise(function (resolve) {
         myBlob = new Blob(barray, { type: 'audio/wav' });
