@@ -4,8 +4,9 @@ import { Devices } from '/imports/api/devices/devices.js';
 import http from 'http';
 import socket_io from 'socket.io';
 import { io } from 'socket.io-client';
-const remotesocket = io("http://68.227.145.128:8080");
-//const remotesocket = io("https://demos.zenzig.com");
+//const remotesocket = io("http://68.227.145.128:8080");
+const homesocket = io("http://home.zenzig.com:8080");
+const remotesocket = io("https://demos.zenzig.com");
 var fs = Npm.require('fs-extra');
 const OnvifManager = require('onvif-nvt');
 const Blob = require('node-blob');
@@ -37,7 +38,7 @@ var process_exec_sync = function (command) {
 };
 
 function ffmpegStreamAudio(filename) {
-    let result = process_exec_sync(`ffmpeg -re -i  /home/rich/apex/apex-ochsner-poc/.uploads/${filename} -acodec pcm_s16be -ar 44100 -ac 2 -payload_type 10 -f rtp udp://home.zenzig.com:554`);
+    let result = process_exec_sync(`ffmpeg -re -i  /home/rich/apex/apex-ochsner-poc/.uploads/${filename} -acodec pcm_s16be -ar 44100 -ac 2 -payload_type 10 -f rtp udp://home.zenzig.com:8554`);
      // check for error
     if (result.error) {
       throw new Meteor.Error("exec-fail", "Error running ffmpeg: " + result.error.message);
@@ -129,7 +130,12 @@ Meteor.startup(() => {
   Devices.rawCollection().find({_id: "devices"}).forEach(function(doc) {
       console.log(doc);
   });
-  
+ 
+    socket.on("socketTest", function() {
+      console.log("socketTest");
+      homesocket.emit('socketTest');
+    });
+
   socket.on("testSocket", function(data) {
       console.log("testSocket: "+data);
       remotesocket.emit('audioMessage', data);
@@ -149,8 +155,8 @@ Meteor.startup(() => {
         sequence
           .then(() => {
             //saveRecording(myBlob.buffer, "myaudio.wav", "/.uploads/");
-            remotesocket.emit('audioMessage',myBlob.buffer);
-            console.log("emit audio to remote");
+            homesocket.emit('audioMessage',myBlob.buffer);
+            console.log("emit audio to remote: ");
             return;
         });
   });

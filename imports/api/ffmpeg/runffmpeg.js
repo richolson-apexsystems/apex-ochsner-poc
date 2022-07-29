@@ -92,15 +92,27 @@ Meteor.methods({
     ffmpegCopyFromCamera: function(camera_url, edge_device) {
       this.unblock();
        // var result = process_exec_sync(`ffmpeg -use_wallclock_as_timestamps 1 -rtsp_transport udp -i ${camera_url} -c copy -f rtsp rtsp://localhost:8554/${edge_device} 2> /home/rich/apex/apex-ochsner-poc/imports/api/ffmpeg/ffmpeg.log`);
-       var result = process_exec_sync(`ffmpeg -use_wallclock_as_timestamps 1 -rtsp_transport udp -i ${camera_url} -c copy -f rtsp rtsp://localhost:8554/${edge_device}`);
+        var result = process_exec_sync(`ffmpeg -use_wallclock_as_timestamps 1 -rtsp_transport udp -i ${camera_url} -c copy -f rtsp rtsp://localhost:8554/${edge_device}`);
         if (result.error) {
           throw new Meteor.Error("exec-fail", "Error running ffmpeg: " + result.error.message);
         }
         return result;
     },
     
+    ffmpegCopyFromCameraH265: function(camera_url, edge_device) {
+      this.unblock();
+       // var result = process_exec_sync(`ffmpeg -use_wallclock_as_timestamps 1 -rtsp_transport udp -i ${camera_url} -c copy -f rtsp rtsp://localhost:8554/${edge_device} 2> /home/rich/apex/apex-ochsner-poc/imports/api/ffmpeg/ffmpeg.log`);
+        var result = process_exec_sync(`ffmpeg -use_wallclock_as_timestamps 1 -rtsp_transport tcp -i ${camera_url} -f lavfi -i aevalsrc=0 -vcodec copy -acodec aac -map 0:0 -map 1:0 -c:v libx264 -pix_fmt yuv420p -shortest -strict experimental -f rtsp rtsp://localhost:8554/${edge_device}`);
+        if (result.error) {
+          throw new Meteor.Error("exec-fail", "Error running ffmpeg: " + result.error.message);
+        }
+        return result;
+    },
+        
+    
     ffmpegRecordFromCamera: function(edge_device, filename) {
       this.unblock();
+      //var result = process_exec_sync(`ffmpeg -y -live_start_index -99999 -i http://127.0.0.1:8888/${edge_device}/stream.m3u8 -c copy -t 20 /home/rich/apex/apex-ochsner-poc/.uploads/${filename}.mp4`);
         var result = process_exec_sync(`ffmpeg -y -live_start_index -99999 -i http://127.0.0.1:8888/${edge_device}/stream.m3u8 -c copy -bsf:a aac_adtstoasc -t 20 /home/rich/apex/apex-ochsner-poc/.uploads/${filename}.mp4`);
         if (result.error) {
           throw new Meteor.Error("exec-fail", "Error running ffmpeg: " + result.error.message);

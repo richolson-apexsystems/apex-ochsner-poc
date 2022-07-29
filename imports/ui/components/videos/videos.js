@@ -9,6 +9,7 @@ import { ReactiveDict } from 'meteor/reactive-dict';
 import bootbox from 'bootbox';
 import { io } from 'socket.io-client';
 const socket = io("https://rtsp.zenzig.com", {secure:true});
+
 //const remotesocket = io("https://68.227.145.128:8080");
 //const remotesocket = io("https://demos.zenzig.com");
 import '/node_modules/bootstrap-select/dist/css/bootstrap-select.css';
@@ -395,7 +396,7 @@ Template.videos.events({
  'click #js-socket-test': function(e,t) {
     e.preventDefault();  
     //remotesocket.emit('audioMessage', true);
-    socket.emit("testSocket", true);
+    socket.emit("socketTest");
     console.log("socket test");
   },  
 
@@ -462,7 +463,7 @@ Template.videos.events({
             });
             this.mediaRecorder.addEventListener("stop", () => {
                 // send audio data over socket.io to server - server currently redirects audio back to client for playback
-                 socket.emit('audioMessage',audioChunks);
+                 socket.emit('audioSend',audioChunks);
                 //socket.emit('audioSendLocal',audioChunks);
                 // turn off red recording icon in browser tab
                 stream.getTracks() // get all tracks from the MediaStream
@@ -628,6 +629,7 @@ Template.videos.events({
           } // close if areReady
         });      
      },
+     
 
  'click #js-kill-ffmpeg': function(e,t) {
     e.preventDefault();
