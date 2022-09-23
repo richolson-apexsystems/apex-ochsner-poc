@@ -104,7 +104,7 @@ const { proxy, scriptUrl } = rtspRelay(app, vidserver);
 // we use rtsp-relay's "cameraIP" parameter to pass our proxy name from the client by useing it in the canvas initialization here  /imports/ui/components/videos/videos.js line 209
 app.ws('/api/stream/:cameraIP', (ws, req) =>
   proxy({
-    additionalFlags: ['-q', '1', '-acodec', 'aac', '-ac', '2', '-ab', '32k', '-ar', '44100', '-max_muxing_queue_size', '1024' ],
+    additionalFlags: ['-q', '1'], // these are flags passed to ffmpeg 
     transport: 'tcp',
    // in the client we construct a url like this: url: 'wss://' + window.location.host + ':8443' + `/api/stream/${myDoc.edge_device}`
     url: `rtsp://rtsp.zenzig.com:8554/${req.params.cameraIP}`, // cameraIP contains our proxy name from client.

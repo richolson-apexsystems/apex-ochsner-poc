@@ -209,7 +209,8 @@ Template.videos.onRendered(function videosOnRendered() {
                 url: 'wss://' + window.location.host + ':8443' + `/api/stream/${myDoc.edge_device}`,
                 canvas: document.getElementById(`${myDoc.edge_device}`),
                 volume: 100,
-                poster: '/public/img/poster.png',
+                poster: 'public/img/poster.png',
+                audio: true,
                 // optional
                 onDisconnect: () => console.log('Connection lost!')      
             }); 
