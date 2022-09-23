@@ -34,3 +34,4 @@ reactive-dict
 tomi:upload-server
 tomi:upload-jquery
 fetch
+react-template-helper

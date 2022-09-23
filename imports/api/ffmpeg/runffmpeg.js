@@ -112,8 +112,8 @@ Meteor.methods({
     
     ffmpegRecordFromCamera: function(edge_device, filename) {
       this.unblock();
-      //var result = process_exec_sync(`ffmpeg -y -live_start_index -99999 -i http://127.0.0.1:8888/${edge_device}/stream.m3u8 -c copy -t 20 /home/rich/apex/apex-ochsner-poc/.uploads/${filename}.mp4`);
-        var result = process_exec_sync(`ffmpeg -y -live_start_index -99999 -i http://127.0.0.1:8888/${edge_device}/stream.m3u8 -c copy -bsf:a aac_adtstoasc -t 20 /home/rich/apex/apex-ochsner-poc/.uploads/${filename}.mp4`);
+      var result = process_exec_sync(`ffmpeg -y -live_start_index -99999 -sseof -10 -i http://127.0.0.1:8888/${edge_device}/stream.m3u8 -c copy -t 10 /home/rich/apex/apex-ochsner-poc/.uploads/${filename}.mp4`);
+        //var result = process_exec_sync(`ffmpeg -y -live_start_index -99999 -i http://127.0.0.1:8888/${edge_device}/stream.m3u8 -c copy -bsf:a aac_adtstoasc -t 20 /home/rich/apex/apex-ochsner-poc/.uploads/${filename}.mp4`);
         if (result.error) {
           throw new Meteor.Error("exec-fail", "Error running ffmpeg: " + result.error.message);
         } 

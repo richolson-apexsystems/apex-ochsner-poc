@@ -6,6 +6,7 @@ import { Session } from 'meteor/session';
 import '../../ui/layouts/landingLayout/landingLayout.js';
 import '../../ui/pages/home/home.js';
 import '../../ui/pages/dashboard/dashboard.js';
+import '../../ui/pages/rtspPage/rtspPage.js';
 import '../../ui/pages/not-found/not-found.js';
 
 
@@ -25,6 +26,13 @@ FlowRouter.route('/dashboard', {
     },
 });
 
+// Patient data
+FlowRouter.route('/rtsp', {
+    name: 'rtspPage',
+    action() {
+        BlazeLayout.render("landingLayout", { main: "rtspPage" });
+    },
+});
 FlowRouter.route('*', { 
    action() {
      BlazeLayout.render("landingLayout", { main: 'App_notFound' });

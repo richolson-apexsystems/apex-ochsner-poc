@@ -8,8 +8,8 @@
     margin:2px 0 0 0;
     width:98%;
     height:30px;
-    background-color:#101820;
-    background: linear-gradient(to right, transparent, 0%, #101820, 99%, transparent);
+    /* background-color:#101820; */
+    /* background: linear-gradient(to right, transparent, 0%, #101820, 99%, transparent);  */
     color:white;
 }
 
@@ -62,8 +62,8 @@
 
 .modal {
     position: fixed;
-    top: 100px !important;
-    left: 62vw !important;
+    top: 100px !important; /* to prevent modal from covering video */
+    left: 62vw !important; /* to prevent modal from covering video */
     z-index: 1055;
     display: none;
     width:520px;
@@ -72,3 +72,17 @@
     overflow-y: hidden;
     outline: 0;
 }      
+
+/* CANVAS VIDEO : position canvas within its container  */
+canvas { 
+    display:block; 
+} 
+
+.card {
+    flex-direction: row !important;
+}
+
+div.card.card-min-width.col-4.mx-5 {
+    width: 39.0%;
+}
+/* end canvas */

@@ -1,17 +1,24 @@
 import { Meteor } from 'meteor/meteor';
+import { WebApp } from 'meteor/webapp';
+const rtspRelay = require('rtsp-relay');// CANVAS VIDEO REQUIREMENT
+const https = require('https');// CANVAS VIDEO REQUIREMENT
 import { Mongo } from 'meteor/mongo';
 import { Devices } from '/imports/api/devices/devices.js';
 import http from 'http';
 import socket_io from 'socket.io';
 import { io } from 'socket.io-client';
-//const remotesocket = io("http://68.227.145.128:8080");
-const homesocket = io("http://home.zenzig.com:8080");
-const remotesocket = io("https://demos.zenzig.com");
-var fs = Npm.require('fs-extra');
+const remotesocket = io("http://demo.zenzig.com:8083");
+const homesocket = io("http://home.zenzig.com:8081");
+const fs = Npm.require('fs-extra');// CANVAS VIDEO REQUIREMENT (and other things)
 const OnvifManager = require('onvif-nvt');
 const Blob = require('node-blob');
+const readline = require('readline'); // CANVAS VIDEO REQUIREMENT
+const insertLine = require('insert-line');// CANVAS VIDEO REQUIREMENT
 // set a port for the socket.io connection, meteor is running on port 3000
 const PORT = 8080;
+
+import express from 'express';
+
 
 // meteor needs a seperate process to handle external synchronous commands, like calling a bash script and getting the result
 var process_exec_sync = function (command) {
@@ -82,10 +89,35 @@ function saveRecording(blob, name, path, encoding) {
   .catch(err => {
     console.error(err);
   });
-
 } 
 
+
 Meteor.startup(() => {
+
+// CANVAS VIDEO : define rtsp-relay video server
+const rd = process.env.PWD;
+const key = fs.readFileSync(`${rd}/imports/startup/server/privkey.pem`, 'utf8');
+const cert = fs.readFileSync(`${rd}/imports/startup/server/fullchain.pem`, 'utf8');
+const app = express();
+const vidserver = https.createServer({ key, cert }, app);
+const { proxy, scriptUrl } = rtspRelay(app, vidserver);
+// we use rtsp-relay's "cameraIP" parameter to pass our proxy name from the client by useing it in the canvas initialization here  /imports/ui/components/videos/videos.js line 209
+app.ws('/api/stream/:cameraIP', (ws, req) =>
+  proxy({
+    additionalFlags: ['-q', '1', '-acodec', 'aac', '-ac', '2', '-ab', '32k', '-ar', '44100', '-max_muxing_queue_size', '1024' ],
+    transport: 'tcp',
+   // in the client we construct a url like this: url: 'wss://' + window.location.host + ':8443' + `/api/stream/${myDoc.edge_device}`
+    url: `rtsp://rtsp.zenzig.com:8554/${req.params.cameraIP}`, // cameraIP contains our proxy name from client.
+  })(ws),
+);
+
+vidserver.listen(8443);
+// WebApp is an internal connect server that Meteor runs - basically Express.
+WebApp.connectHandlers.use(app);  
+// END CANVAS VIDEO CODE
+  
+  
+  
   // define socket.io server and set CORS to allow all access
   const server = http.createServer();
   const io = socket_io(server, {
@@ -239,6 +271,13 @@ try {
       }
     }
   });
+
+
+
+
+
+
+
 
 
 });

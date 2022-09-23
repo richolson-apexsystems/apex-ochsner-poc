@@ -1,7 +1,6 @@
 <template name="videos">
-    {{getWidth}}
    {{#if subsReady}}
-    <div class="container-fluid px-4 mx-5 pb-3">
+    <div class="container-fluid px-5 mx-5 pb-3">
         <div class="row col-12  container-min-width">
             <div class="card col-2" style="min-width:350px;">
                 <div class="card-body card-body-min-height" >
@@ -19,31 +18,31 @@
             </div>
       
             {{#each getEdgeData}}
-                <div class="card card-min-width col-4 mx-5" style="width:700px;"><!-- CANVAS VIDEO NOTE: width is set to 700px to fit 640px video width of canvas -->
+                <div class="card card-min-width col-4 mx-5">
                     <div class="card-body cardsize">
                             {{#if edge_device }}   
-                            <div style="position:relative;flex-direction:row;">
+                            <div style="position:relative;">
                                 <div class="video-element-wrapper">
                                     <div class="video-icon-bar">
                                         Nurse {{formatPhoneNumber nurse_phone}} 
+                                         <i class="ps-5 video-controls-effects js-microphone fa-solid fa-microphone-slash"></i>
                                          <span class="inlineRight pe-3">
-                                           <!-- <i class="ps-5 video-controls-effects js-microphone fa-solid fa-microphone-slash"></i> -->
-                                           <i class="pe-1 video-controls-effects js-thumbs-down fa-solid fa-thumbs-up"></i>
-                                           <i class="fa-solid video-controls-effects js-thumbs-down fa-thumbs-down"></i>   
+                                               <i class="pe-1 video-controls-effects js-thumbs-down fa-solid fa-thumbs-up"></i>
+                                               <i class="fa-solid video-controls-effects js-thumbs-down fa-thumbs-down"></i>   
                                          </span>
                                      </div>    
                                 </div>
-                                <div id="{{edge_device}}-border" class="mt-2 js-mouse-vidb {{edge_device}}" style="border: solid 4px grey;width:100%;overflow:hidden;">
-                                    <!-- CANVAS VIDEO NOTE: We add a canvas element with an unique id, in this case edge_device -->
-                                    <canvas id="{{edge_device}}">
-                                    </canvas>
+                                <div id="{{edge_device}}-border" class="m-2 js-mouse-vidb {{edge_device}}" style="border: solid 4px grey;width:100%;overflow:hidden;">
+                                    <video id="{{edge_device}}" class="video-js vjs-default-skin vjs-16-9" height="420" controls autoplay muted="true" preload="none">
+                                        <source src="https://hls.zenzig.com/{{edge_device}}/index.m3u8" type="application/x-mpegURL" />
+                                    </video>
                                 </div>
                             </div>
                             {{else}}
                             <div class="js-mouse-vidb {{edge_device}} videoholder" ></div>
                             {{/if}}
                             <span class="card-title text-danger inlineRight">
-                                {{#if showRecordingCount}} Recording: {{showRecordingCount}} of 10.{{/if}}
+                                {{#if showRecordingCount}} Recording: {{showRecordingCount}} of 20.{{/if}}
                             </span>
                             <h5 class="card-title">Room {{room_number}}
                             </h5>
@@ -54,37 +53,29 @@
                                 <div class="inlineLeft">
                                     <a href="#" type="button" id="js-edgetest-start" class="btn btn-outline-success" role="button" aria-pressed="true">Start Data</a>
                                     <a href="#" type="button" id="js-edgetest-stop" class="btn btn-outline-danger" role="button" aria-pressed="true">Stop Data</a>
-                                    <!--
                                     <a href="#" type="button" class="btn btn-outline-danger js-audio-button" role="button" aria-pressed="true">
-                                       <i class="fa-solid fa-microphone"></i>
+                                        <i class="fa-solid fa-microphone"></i>
                                     </a>
-                                    -->
                                     <div class="inlineRight">
                                         <h2>{{edgeData edge_device}}</h2>
                                     </div>
                                 </div>
                                 <div class="mt-2">
-                                    <!--
                                     <a href="#" id="js-reset-player" class="btn btn-outline-dark" role="button" aria-pressed="true">Reset Player</a>
                                     
                                     <a href="#" id="js-reset-player-h265" class="btn btn-outline-dark" role="button" aria-pressed="true">Reset Player H265</a>
                                     
                                     <a href="#" id="js-socket-test" class="btn btn-outline-dark" role="button" aria-pressed="true">Remote Socket Test</a>
-                                    -->
                                 </div>
                                 <div class="mt-2">
-                                    <!--
                                     <a href="#" id="js-volume" class="btn  btn-outline-danger" role="button" aria-pressed="true">Toggle Player Volume</a> 
-                                    -->
                                     <!--
                                     <a href="#" id="js-kill-ffmpeg" class="btn  btn-outline-danger" role="button" aria-pressed="true">Remove Element & Kill ffmpeg</a> 
                                     -->
                                 </div>
                                 <div class="mt-2">
-                                    <!--
                                     <a href="#" id="js-start-ffmpeg" class="btn btn-outline-success" role="button" aria-pressed="true">Start ffmpeg</a>
                                     <a href="#" id="js-stop-ffmpeg" class="btn btn-outline-danger" role="button" aria-pressed="true">Stop ffmpeg</a>
-                                    -->
                                 </div>                                
                             {{/if}}
                     </div>
@@ -99,7 +90,7 @@
         <h3>loading ...</h3>
     </div>
     {{/if}}
+    
+
+
 </template>
-
-
-

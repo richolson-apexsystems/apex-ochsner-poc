@@ -8,20 +8,19 @@ import { Session } from 'meteor/session';
 import { ReactiveDict } from 'meteor/reactive-dict';
 import bootbox from 'bootbox';
 import { io } from 'socket.io-client';
-import { loadPlayer } from 'rtsp-relay/browser'; //CANVAS VIDEO - attaches to wss connection from fixtures line 116
-import '/node_modules/bootstrap-select/dist/css/bootstrap-select.css';
+const socket = io("https://rtsp.zenzig.com", {secure:true});
+import { loadPlayer } from 'rtsp-relay/browser';
 
-//CANVAS VIDEO NOTE: I don't think we need videojs any longer.
+//const remotesocket = io("https://68.227.145.128:8080");
+//const remotesocket = io("https://demos.zenzig.com");
+import '/node_modules/bootstrap-select/dist/css/bootstrap-select.css';
 import videojs from 'video.js';
 import 'videojs-errors';
 import '/node_modules/videojs-errors/dist/videojs-errors.css';
-
 const pageSession = new ReactiveDict();
 Session.set("recordingResult", null);
 
-const socket = io("https://rtsp.zenzig.com", {secure:true});
-
-//how to use: JSON.stringify(circularReference, getCircularReplacer());
+//JSON.stringify(circularReference, getCircularReplacer());
 // view objects that contain circular referrences
 const getCircularReplacer = () => {
   const seen = new WeakSet();
@@ -71,40 +70,8 @@ function getDeviceIndex(array,searchfor) {
     return index;
 }
 
-
-
-// fit a rect into some container, keeping the aspect ratio of the rect
-function fitCanvasIntoContainer(canvasWidth, canvasHeight, containerWidth, containerHeight) {
-    let widthRatio = containerWidth / canvasWidth;    // ration container width to rect width
-    let heightRatio = containerHeight / canvasHeight; // ration container height to rect height
-    let ratio = Math.min( widthRatio, heightRatio ); // take the smaller ratio
-    // new canvas width and height, scaled by the same ratio
-    return {
-        width: canvasWidth * ratio,
-        height: canvasHeight * ratio,
-    };
-}
-
-// canvas.height, canvas.width, container.width, container.height
-//const canvasSize = fitCanvasIntoContainer( 640, 360, 700, 400 );
-//const canvasWidth = canvasSize.width;
-//const canvasHeight = canvasSize.height;
-
 function resizeListener() {
- let size = {
-    width: window.innerWidth,
-    height: window.innerHeight
-  };
-  Session.set('resize', size);
-}
-
-
-function resizeCanvasListener() {
- let size = {
-    width: window.innerWidth,
-    height: window.innerHeight
-  };
-  Session.set('resizeCanvas', size);
+  Session.set('resize', window.innerWidth);
 }
 window.addEventListener("resize", resizeListener);
 
@@ -154,8 +121,18 @@ Template.videos.onCreated(function videosOnCreated() {
           Session.set(''+myDoc.edge_device+'', true);   
           // check our devices array for an index matching this device name
           let deviceIndex = getDeviceIndex(devices[0].devices, myDoc.edge_device);
+          //console.log("deviceIndex: "+deviceIndex);
+          // if an index is found it means we already have an ffmpeg process running for this device and we skip this step
+          // if the value is undefined we need to call ffmpeg to get the stream for this device
           if(deviceIndex === undefined) {
-            // add device name to devices array  
+            // this starts server-side ffmpeg process to ingest rtsp from remote camera and route to local rtsp server
+            // to create hls consumed by our client
+            Meteor.call('ffmpegCopyFromCamera',''+myDoc.camera_url+'',''+myDoc.edge_device+'', function(err, res) {
+              if (err) { return console.log("ffmpegCopyFromCamera err: "+err)} 
+              //console.log("copy from camera called.");
+              return true;
+            });   
+            // this adds device name to devices array  
             Meteor.call("devicePushDevices",{"edgedevice": myDoc.edge_device});
           }
         }
@@ -166,13 +143,21 @@ Template.videos.onCreated(function videosOnCreated() {
   // set default Session values - these are returned to the template by 
   // helper functions defined in the helpers section below - Session is reactive 
   // in Meteor so events tied to Session fire when Session values change
+  //Session.set('edgeDevice', false);
   Session.set("mouseOver", false);
+  //Session.set("recordingResult", false);
   Session.set("recordingCount", false);
 
 });
 
 Template.videos.onRendered(function videosOnRendered() {
   $(document).ready(function(){
+    
+    
+ 
+    
+    
+    
     //listener to recieve and play audio returned from server
     socket.on('audioReturnLocal', function (audioChunks) {
         const audioBlob = new Blob(audioChunks);
@@ -181,6 +166,30 @@ Template.videos.onRendered(function videosOnRendered() {
         audio.play();
     });    
     
+    // listener hard coded to room for testing - get's data feed from server to change elemment border color
+    socket.on('room352', (data) => {
+        let event = 'room352';
+        //console.log("room352: "+data);
+        let el = document.getElementById(""+event+"-border");
+        //If it isn't "undefined" and it isn't "null", then it exists.
+        if(typeof(el) != 'undefined' && el != null){
+          if (data == 0) {
+              el.style.border = "solid 6px green";
+              Session.set("edgedata", data);
+              Session.set(event, data);
+          } else if (data == 1) {
+            Session.set("edgedata", data);
+            Session.set(event, data);
+              el.style.border = "solid 6px yellow";
+          } else if (data == 2) {
+            Session.set("edgedata", data);
+            Session.set(event, data);
+              el.style.border = "solid 6px red";
+          } 
+        }        
+      });
+
+
   // get our data
   const handles = [
     Meteor.subscribe('patients.all'),
@@ -196,25 +205,47 @@ Template.videos.onRendered(function videosOnRendered() {
           // create an id from edge device name
           let videoid = '#'+myDoc.edge_device+'';
           // store edge device name in a Session object with a value of false. 
-          // This is used to show the data value in card when mouseover player. 
+          // This is used to show the data value in card with player. 
           Session.set(myDoc.edge_device, false);
-          
-          // CANVAS VIDEO: setTimeout to make sure canvas element has rendered before we try to initialize it
-          Meteor.setTimeout(function() {
-            // we pass the camera ip by adding it to loadplayer url definition as in: url: 'wss://' + window.location.host + ':8443' + `/api/stream/${proxie_name}`
-            // note: we are using proxies defined in rtsp-simple-server.yml file for our stream name so rtsp feeds we show in client will always come from our host 
-            // domain or IP at name space /api/stream/proxie 
-            const canvas = document.getElementById(`${myDoc.edge_device}`);
-            loadPlayer({
-                url: 'wss://' + window.location.host + ':8443' + `/api/stream/${myDoc.edge_device}`,
-                canvas: document.getElementById(`${myDoc.edge_device}`),
-                volume: 100,
-                poster: '/public/img/poster.png',
-                // optional
-                onDisconnect: () => console.log('Connection lost!')      
-            }); 
-          },100);
-          
+          // our ffmpeg call in onCreated should have started pulling rtsp from the remote camera passing it to local rtsp server to generate HLS.
+          // we need to make sure our hls url is available before we insert the videojs player so we wrap our insertion code in this url checking function.
+          ifUrlExist(`https://hls.zenzig.com/${myDoc.edge_device}/index.m3u8`, function(exists) {
+            // our HLS url is avaialable but we delay for a couple of seconds here just to make sure
+            Meteor.setTimeout(function() {
+              // we use a setInterval to continuosly check our element exists before we try to remove it.
+              let existCondition = setInterval(function() {
+               if ($(videoid).length) {
+                // here we have our element so we can procede
+                // console.log("Element Exists!");
+                // 1. we have to destroy our videojs instance.
+                // 2. we have to replace the html video container.
+                // 3. we have to initialize a new videojs instance on the new container.
+                // These things must be done in sequence so we setup a promise chain to handle it.
+                let sequence = new Promise(function (resolve) {
+                  // dispose the videojs instance and resolve the promise
+                  videojs(videoid).dispose();
+                  resolve();
+                });
+                sequence
+                  .then(() => {
+                  // we still have our video border element to use as a referrence to replace the video element that was removed 
+                  // so we insert the code into that container here
+                      $(`#${myDoc.edge_device}-border`).html(`<video id="${myDoc.edge_device}" class="video-js vjs-default-skin vjs-16-9" height="360" controls autoplay muted="true" preload="none"><source src="https://hls.zenzig.com/${myDoc.edge_device}/index.m3u8" type="application/x-mpegURL" /></video>`); 
+                    return;
+                  }).then(() =>{
+                      let player = videojs(videoid).on('error', function() {
+                          Meteor.call('ffmpegCopyFromCamera',''+myDoc.camera_url+'',''+myDoc.edge_device+'', function(err, res) {
+                          if (err) { return console.log("ffmpegCopyFromCamera err: "+err)} 
+                          return true;
+                        });   
+                      });                    
+                      return;
+                  });                
+                  clearInterval(existCondition);
+               } // close if element exists
+              }, 100); // check every 100ms                   
+            },2000);
+          }); // close ifUrlExists
         }); // close Patients.find()
       } // close if areReady
     });
@@ -223,11 +254,6 @@ Template.videos.onRendered(function videosOnRendered() {
 });
 
 Template.videos.helpers({
-  getWidth() {
-    let sizeObj = Session.get("resize");
-    return sizeObj.width;
-  },
-  
   // this wraps the template to assure our data is ready before we try to load template
   subsReady() {
     Template.instance().areReady = Template.instance().handles.every(handle => handle.ready());
@@ -241,12 +267,9 @@ Template.videos.helpers({
     return Session.get('edgeDevice');
   },
   
-  // helper to show current data value when data simulation is running
   edgeData(devicename) {
     if(Session.get(devicename) === 0 || 1 || 2) {
       return Session.get(devicename);
-    } else {
-      return "";
     }
   },
 
@@ -266,7 +289,10 @@ Template.videos.helpers({
     }     
   },
   
-
+  getWidth() {
+    return Session.get("resize");
+  },
+  
   getEdgeData() {
       let edgeDevice = Patients.find({}, {"edge_device":String}).fetch();
       if(edgeDevice.length) {
@@ -399,9 +425,7 @@ Template.videos.events({
       e.preventDefault();
       let me = this;
 		  let edgeId = `#${me.edge_device}`;
-		  const canvas = document.getElementById(`${me.edge_device}`);
-		  //let vp = videojs(""+edgeId+"").player();
-		  let vp = canvas;
+		  let vp = videojs(""+edgeId+"").player();
       console.log("toggle player volume");
       let muted = vp.muted();
       console.log("muted: "+muted);
@@ -522,7 +546,7 @@ Template.videos.events({
           	let interval = setInterval(function() {
               count++;
               Session.set(me.room_number, count);
-              if (count === 10) {
+              if (count === 20) {
                 clearInterval(interval);
                  bootbox.dialog({
                     title: "This is the video that was recorded.",
@@ -563,6 +587,105 @@ Template.videos.events({
       });
   },
 
+   'click #js-reset-player': function(e,t) {
+      e.preventDefault();  
+      const me = this;
+      // create an id from edge device name
+      let videoid = '#'+me.edge_device+'';
+       Tracker.autorun(() => {
+          const areReady = t.handles.every(handle => handle.ready());
+          // make sure data is ready
+          if(areReady) {
+            console.log("areReady");
+              // our ffmpeg call in onCreated should have started pulling rtsp from the remote camera passing it to local rtsp server to generate HLS.
+              // we need to make sure our hls url is available before we insert the videojs player so we wrap our insertion code in this url checking function.
+              ifUrlExist(`https://hls.zenzig.com/${me.edge_device}/index.m3u8`, function(exists) {
+                   if ($(videoid).length) {
+                     // here we have our element so we can procede
+                     // console.log("Element Exists!");
+                    // 1. we have to destroy our videojs instance.
+                    // 2. we have to replace the html video container.
+                    // 3. we have to initialize a new videojs instance on the new container.
+                    // These things must be done in sequence so we setup a promise chain to handle it.
+                    let sequence = new Promise(function (resolve) {
+                      // dispose the videojs instance and resolve the promise
+                      videojs(videoid).dispose();
+                      resolve();
+                    })
+                    sequence
+                      .then(() => {
+                      // we still have our video border element to use as a referrence to replace the video element that was removed 
+                      // so we append the code into that container here
+                      $(`#${me.edge_device}-border`).append(`<video id="${me.edge_device}" class="video-js vjs-default-skin vjs-16-9" height="360" controls autoplay muted="true" preload="none"><source src="https://hls.zenzig.com/${me.edge_device}/index.m3u8" type="application/x-mpegURL" /></video>`); 
+                        return;
+                      }).then(() =>{
+                          // since we added a new video element we just need to initialize videojs on it
+                          let player = videojs(videoid).on('error', function() {
+                          let edgeDevice = me.edge_device;
+                          console.log("error edgeDevice: "+edgeDevice);
+                          Meteor.call('ffmpegCopyFromCamera',''+me.camera_url+'',''+me.edge_device+'', function(err, res) {
+                            if (err) { return console.log("ffmpegCopyFromCamera err: "+err)} 
+                            //return true;
+                          });   
+                        });
+                        //return;
+                      });              
+                   } // close if element exists
+              }); // close ifUrlExists
+      
+          } // close if areReady
+        });      
+     },
+
+   'click #js-reset-player-h265': function(e,t) {
+      e.preventDefault();  
+      const me = this;
+      // create an id from edge device name
+      let videoid = '#'+me.edge_device+'';
+       Tracker.autorun(() => {
+          const areReady = t.handles.every(handle => handle.ready());
+          // make sure data is ready
+          if(areReady) {
+            console.log("areReady");
+              // our ffmpeg call in onCreated should have started pulling rtsp from the remote camera passing it to local rtsp server to generate HLS.
+              // we need to make sure our hls url is available before we insert the videojs player so we wrap our insertion code in this url checking function.
+              ifUrlExist(`https://hls.zenzig.com/${me.edge_device}/index.m3u8`, function(exists) {
+                   if ($(videoid).length) {
+                     // here we have our element so we can procede
+                     // console.log("Element Exists!");
+                    // 1. we have to destroy our videojs instance.
+                    // 2. we have to replace the html video container.
+                    // 3. we have to initialize a new videojs instance on the new container.
+                    // These things must be done in sequence so we setup a promise chain to handle it.
+                    let sequence = new Promise(function (resolve) {
+                      // dispose the videojs instance and resolve the promise
+                      videojs(videoid).dispose();
+                      resolve();
+                    })
+                    sequence
+                      .then(() => {
+                      // we still have our video border element to use as a referrence to replace the video element that was removed 
+                      // so we append the code into that container here
+                      $(`#${me.edge_device}-border`).append(`<video id="${me.edge_device}" class="video-js vjs-default-skin vjs-16-9" height="360" controls autoplay muted="true" preload="none"><source src="https://hls.zenzig.com/${me.edge_device}/index.m3u8" type="application/x-mpegURL" /></video>`); 
+                        return;
+                      }).then(() =>{
+                          // since we added a new video element we just need to initialize videojs on it
+                          let player = videojs(videoid).on('error', function() {
+                          let edgeDevice = me.edge_device;
+                          console.log("error edgeDevice: "+edgeDevice);
+                          Meteor.call('ffmpegCopyFromCameraH265',''+me.camera_url+'',''+me.edge_device+'', function(err, res) {
+                            if (err) { return console.log("ffmpegCopyFromCameraH265 err: "+err)} 
+                            //return true;
+                          });   
+                        });
+                        //return;
+                      });              
+                   } // close if element exists
+              }); // close ifUrlExists
+      
+          } // close if areReady
+        });      
+     },     
 
  'click #js-kill-ffmpeg': function(e,t) {
     e.preventDefault();

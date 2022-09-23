@@ -5,11 +5,8 @@ import { ReactiveDict } from 'meteor/reactive-dict';
 import './patients.html';
 import './grid.css';
 import { io } from 'socket.io-client';
-//const socket = io("https://demos.zenzig.com");
 const localsocket = io("https://rtsp.zenzig.com");
 var dayjs = require('dayjs');
-//import "jquery-validation";
-//import "jquery-validation/dist/additional-methods.js"
 import bootbox from 'bootbox';
 // we create a reactive variable named pageSession scoped to this template to prevent name collisions
 // that would occur accross various templates if we were to use the globally available Session object here.
@@ -46,29 +43,6 @@ Template.patients.onCreated(function patientsOnCreated() {
 
 Template.patients.onRendered(function(){
   $(document).ready(function(){
-    
-/* 
-    // socket.io testing
-      socket.on('pytest', (data) => {
-        //console.log("pytest: "+data);
-        let el = document.getElementById("js-test-audio");
-          //If it isn't "undefined" and it isn't "null", then it exists.
-          if(typeof(el) != 'undefined' && el != null){
-            if (data == 0) {
-                el.style.border = "solid 6px green";
-            } else if (data == 1) {
-                el.style.border = "solid 6px yellow";
-            } else if (data == 2) {
-                el.style.border = "solid 6px red";
-            } 
-          }
-      });
-      socket.on('pong', () => {
-        console.log("sent ping, recieved pong");
-      });
-*/
-
-
   }); 
 });
 
@@ -127,9 +101,9 @@ Template.patients.events({
  "click #form-submit-button": function(e, t) {
     e.preventDefault();
     let formFields = ['first_name', 'last_name', 'room_number', 'camera_url', 'nurse_name', 'nurse_phone', 'edge_device'];
-    formFields.forEach((element) => {
+    //formFields.forEach((element) => {
       //console.log(element);
-    });
+    //});
     
     let first_name = t.find('#first_name').value;
     let last_name = t.find('#last_name').value;    
@@ -166,10 +140,16 @@ Template.patients.events({
         if (error) {
           alert(error.error);
         } else {
-          document.getElementById("js-patient-form").reset();            }
-      });          
-      //document.getElementById("submit-alert-success").classList.remove("hide-alert");
-      //setTimeout( function() { document.getElementById("submit-alert-success").classList.add("hide-alert");; }, 1500);
+          document.getElementById("js-patient-form").reset(); 
+          // CANVAS VIDEO : add proxie to rtsp server config for this camera
+          Meteor.call("deviceAddProxie", edge_device, camera_url, (error) => {
+            if (error) {
+              alert(error.error);
+            } 
+          });           
+        }
+      }); 
+
     }
 	},
 
@@ -178,12 +158,7 @@ Template.patients.events({
 		let me = this;
 		// we have to set our edgedevice value here becuase we will remove the record first
 		let edgedevice = me.edge_device;
-	  // get our devices data
-    //let devices = Devices.find({_id: "devices"}).fetch();
-    //let deviceIndex = getDeviceIndex(devices[0].devices, me.edge_device);
-    //console.log("deviceIndex: "+devices[0].devices[deviceIndex].edgedevice); 
-		
-		//console.log("me: "+JSON.stringify(me));
+
 		bootbox.dialog({
 			message: "Delete? Are you sure?",
 			title: "Delete",
@@ -193,8 +168,8 @@ Template.patients.events({
 					label: "Yes",
 					className: "btn-success",
 					callback: function() {
-					  
-					  // first we remove the record to prevent videos template from trying to add element
+
+					  // remove the patient record 
 					  Meteor.call('patients.remove', me._id, (error) => {
                 if (error) {
                   alert(error.error);
@@ -202,16 +177,17 @@ Template.patients.events({
                   return true;
                 }
             });
-					  // next we remove the record using a timeout to (should probably refactor to async/await) make sure 
-					  // our killffmpeg call above has the me.edge_device record available
-					  Meteor.setTimeout(function(){
-					      // remove device from devices database
+            
+            // CANVAS VIDEO : remove the rtsp proxie for this camera
+            Meteor.call("deviceRemoveProxie", edgedevice, (error) => {
+					      if (error) {
+                  alert(error.error);
+                } else {
+                  return true;
+                }
+					  }); 
+					  
 					  Meteor.call("devicePullObject", { "edgedevice": edgedevice }); 
-					  // kill any ffmpeg instance for this device name
-					  Meteor.call("killffmpeg", edgedevice);
-   					    
-					  }, 200);
-
 					}
 				},
 				danger: {
@@ -226,7 +202,6 @@ Template.patients.events({
  "click #js-patient-edit": function(e, t) {
     e.preventDefault();
     let me = this;
-    
     //show our edit form
     pageSession.set("addPatient", false);
     // get values for our edit form
@@ -255,59 +230,21 @@ Template.patients.events({
       if (error) {
         alert(error.error);
       } else {
-        //document.getElementById("js-patient-edit-submit-form").reset();
         //show our add form
         pageSession.set("addPatient", true);
-        
       }
     });  
 
 	},
-  
-  
   
  "click #js-test-audio": function(e, t) {
     e.preventDefault();
     let me = this;
     console.log("test audio");
     const xaddr = 'http://68.227.145.128:8888/onvif/device_service' ;
- 
     localsocket.emit("audiotest", true);
- 
- 
- 
- 
- 
- 
-    
-////////////////////////////////////////////////////////
-/*
-new Cam({
-  hostname: '68.227.145.128',
-  username: 'admin',
-  password: 'Password123',
-  port: '8888'
-}, function(err) {
-  this.getDeviceInformation(function(err, res){
-    console.log("res: "+res);
-  });
-
-});
-*/
-
-//////////////////////////////////////////////////////////
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-	},	  
+	},	 
+	
+	
+	
 });
